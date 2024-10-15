@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CGPA Calculator</title>
+    <title>SGPA Calculator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,7 +51,7 @@
 </head>
 <body>
 
-    <h1>CGPA Calculator</h1>
+    <h1>SGPA Calculator</h1>
 
     <div id="semesters-container">
         <div class="semester" id="semester-1">
@@ -85,7 +85,7 @@
                 </tbody>
             </table>
             <button onclick="addSubject(this)">Add Subject</button>
-            <button onclick="calculateSemesterCGPA(this)">Calculate Semester CGPA</button>
+            <button onclick="calculateSemesterSGPA(this)">Calculate Semester SGPA</button>
             <div class="semester-results" id="semester-results-1"></div>
             <button onclick="removeSemester(this)">Remove Semester</button>
         </div>
@@ -141,7 +141,7 @@
                         </tbody>
                     </table>
                     <button onclick="addSubject(this)">Add Subject</button>
-                    <button onclick="calculateSemesterCGPA(this)">Calculate Semester CGPA</button>
+                    <button onclick="calculateSemesterSGPA(this)">Calculate Semester SGPA</button>
                     <div class="semester-results" id="semester-results-${semesterCount}"></div>
                     <button onclick="removeSemester(this)">Remove Semester</button>
                 `;
@@ -151,7 +151,6 @@
                 if (semesterCount === 8) {
                     document.getElementById('add-semester-button').disabled = true;
                 }
-                saveData();
             }
         }
 
@@ -160,7 +159,6 @@
             const semester = button.closest('.semester');
             semester.parentNode.removeChild(semester);
             semesterCount--;
-            saveData();
 
             // Re-enable the add semester button if limit is not reached
             if (semesterCount < 8) {
@@ -190,34 +188,31 @@
                 <td><button onclick="removeSubject(this)">Remove</button></td>
             `;
             tbody.appendChild(newRow);
-            saveData();
         }
 
         // Function to remove subject row
         function removeSubject(button) {
             const row = button.closest('tr');
             row.parentNode.removeChild(row);
-            saveData();
         }
 
-        // Function to calculate semester CGPA
-        function calculateSemesterCGPA(button) {
+        // Function to calculate semester SGPA
+        function calculateSemesterSGPA(button) {
             const semester = button.closest('.semester');
             const rows = semester.querySelectorAll('tbody tr');
             let semesterCredits = 0;
             let semesterPoints = 0;
 
             rows.forEach(row => {
-                const credits = parseInt(row.querySelector('input[type="number"]').value) || 0;
+                const credits = parseFloat(row.querySelector('input[type="number"]').value) || 0;
                 const grade = parseInt(row.querySelector('select').value) || 0;
                 semesterCredits += credits;
                 semesterPoints += credits * grade;
             });
 
-            const semesterCGPA = semesterCredits > 0 ? (semesterPoints / semesterCredits).toFixed(2) : 0;
+            const semesterSGPA = semesterCredits > 0 ? (semesterPoints / semesterCredits).toFixed(2) : 0;
             const resultsDiv = semester.querySelector('.semester-results');
-            resultsDiv.innerHTML = `Semester Credits: ${semesterCredits}, Semester CGPA: ${semesterCGPA}`;
-            saveData();
+            resultsDiv.innerHTML = `Semester Credits: ${semesterCredits}, Semester SGPA: ${semesterSGPA}`;
         }
 
         // Function to calculate total CGPA
@@ -230,7 +225,7 @@
                 const rows = semester.querySelectorAll('tbody tr');
 
                 rows.forEach(row => {
-                    const credits = parseInt(row.querySelector('input[type="number"]').value) || 0;
+                    const credits = parseFloat(row.querySelector('input[type="number"]').value) || 0;
                     const grade = parseInt(row.querySelector('select').value) || 0;
                     totalCredits += credits;
                     totalPoints += credits * grade;
@@ -241,66 +236,7 @@
             const totalPercentage = (totalCGPA * 10).toFixed(2); // Assuming 10 is the maximum for A+
             const resultsDiv = document.getElementById('total-results');
             resultsDiv.innerHTML = `Total Credits: ${totalCredits}, Total CGPA: ${totalCGPA}, Total Percentage: ${totalPercentage}%`;
-            saveData();
         }
-
-        // Function to save data to local storage
-        function saveData() {
-            const semestersData = [];
-            const semesters = document.querySelectorAll('.semester');
-
-            semesters.forEach((semester, index) => {
-                const semesterObj = { subjects: [] };
-                const rows = semester.querySelectorAll('tbody tr');
-
-                rows.forEach(row => {
-                    const subject = row.querySelector('input[type="text"]').value;
-                    const credits = parseInt(row.querySelector('input[type="number"]').value) || 0;
-                    const grade = row.querySelector('select').value;
-                    semesterObj.subjects.push({ subject, credits, grade });
-                });
-                semestersData.push(semesterObj);
-            });
-            localStorage.setItem('semesters', JSON.stringify(semestersData));
-        }
-
-        // Function to load data from local storage
-        function loadData() {
-            const semestersData = JSON.parse(localStorage.getItem('semesters'));
-            if (semestersData) {
-                semestersData.forEach((semesterData, index) => {
-                    if (index === 0) return; // Skip the first semester as it's already in the HTML
-                    addSemester(); // Add new semester
-                });
-                semestersData.forEach((semesterData, index) => {
-                    const semester = document.getElementById(`semester-${index + 1}`);
-                    const tbody = semester.querySelector('tbody');
-                    semesterData.subjects.forEach(subjectData => {
-                        const newRow = document.createElement('tr');
-                        newRow.innerHTML = `
-                            <td><input type="text" value="${subjectData.subject}" placeholder="Subject Name"></td>
-                            <td><input type="number" value="${subjectData.credits}" min="0" max="18"></td>
-                            <td>
-                                <select>
-                                    <option value="10"${subjectData.grade === "10" ? ' selected' : ''}>A+</option>
-                                    <option value="9"${subjectData.grade === "9" ? ' selected' : ''}>A</option>
-                                    <option value="8"${subjectData.grade === "8" ? ' selected' : ''}>B</option>
-                                    <option value="7"${subjectData.grade === "7" ? ' selected' : ''}>C</option>
-                                    <option value="6"${subjectData.grade === "6" ? ' selected' : ''}>D</option>
-                                    <option value="5"${subjectData.grade === "5" ? ' selected' : ''}>E</option>
-                                    <option value="0"${subjectData.grade === "0" ? ' selected' : ''}>F</option>
-                                </select>
-                            </td>
-                            <td><button onclick="removeSubject(this)">Remove</button></td>
-                        `;
-                        tbody.appendChild(newRow);
-                    });
-                });
-            }
-        }
-
-        // Load data when the page is loaded
-        window.onload = loadData;
     </script>
 </body>
 </html>
